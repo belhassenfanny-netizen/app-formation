@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+</body>
+<!-- This setup is not suitable for production. -->
+<!-- Only use it in development! -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react?dev",
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"
+  }
+}
+</script>
+<script type="text/babel" data-type="module">
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import React, { useEffect, useState } from "react";
+
+// Formation McDonald's - Application prototype
+// React component (default export) - Tailwind + shadcn/ui friendly
+
+const INITIAL_AGENDA = [
+  {
+    echelon: "Coach",
+    blocks: [
+      { period: "S1-S2", mission: "Intégration & observation des postes (caisse TPV, cuisine, drive, salle). Découverte QSPV. Observation d’un Coach confirmé." },
+      { period: "S3-S4", mission: "Autonomie sur 3 postes. Premiers FCP accompagnés. Communication basique avec les équipiers." },
+      { period: "S5-S6", mission: "Validation technique sur tous les postes. Réaliser un FCP seul. Début du suivi QSP (check-list)." },
+      { period: "S7-S8", mission: "Encadrer un équipier en temps réel (brief + suivi). Mini-débrief de fin de service. Évaluation intermédiaire." },
+      { period: "S9-S12", mission: "Coaching multi-équipiers, gestion en période de rush, réalisation FCP complet, suivi QSP et actions correctives." },
+      { period: "S13-S16", mission: "Référent QSP sur un créneau. Préparer et animer une séquence de formation pour un nouvel équipier." },
+      { period: "S17-S20", mission: "Coacher une zone complète pendant un service. Préparer rapport QSP/FCP pour le RQ." },
+      { period: "S21-S24", mission: "Évaluation finale : coaching direct, FCP, suivi QSP. Validation Coach par le Responsable Opérationnel." }
+    ]
+  },
+  {
+    echelon: "Responsable Zone (RZ)",
+    blocks: [
+      { period: "S25-S28", mission: "Formation Sécurité alimentaire & DSA. Sensibilisation HACCP et pratiques sûres." },
+      { period: "S29-S32", mission: "Pratique ouverture/fermeture en tant qu’équipier (procédures, check-lists)." },
+      { period: "S33-S36", mission: "Ouverture/fermeture en autonomie en tant que responsable. Gestion incidents." },
+      { period: "S37-S40", mission: "Suivi KPI zone. Application Best Burger (niveau 1)." },
+      { period: "S41-S44", mission: "Supervision multi-postes, optimisation flux & temps, briefings efficaces." },
+      { period: "S45-S48", mission: "Passage du test 'Dev Manager Durable' et validation RZ." }
+    ]
+  },
+  {
+    echelon: "Responsable Opérationnel (RO)",
+    blocks: [
+      { period: "S49-S52", mission: "Formation complète site McDo Best Burger." },
+      { period: "S53-S56", mission: "Formation Gestion de quart (planning, transmission, KPIs)." },
+      { period: "S57-S60", mission: "Prise en main d’un shift en doublon (supervision & apprentissage)." },
+      { period: "S61-S64", mission: "Gestion autonome de shifts, gestion des rushs et équipe complète." },
+      { period: "S65-S68", mission: "Coordination inter-zones, suivi des indicateurs et audits opérationnels." },
+      { period: "S69-S72", mission: "Validation RO via audits et gestion de situations complexes." }
+    ]
+  },
+  {
+    echelon: "Responsable Quart (RQ)",
+    blocks: [
+      { period: "S73-S76", mission: "Best Burger niveau 2 + Gestion de quart niveau 2 (approfondissement)." },
+      { period: "S77-S80", mission: "Gestion d’un shift complet (open) - checklist et pilotage équipe." },
+      { period: "S81-S84", mission: "Gestion d’un shift complet (close) - clôtures et inventaires." },
+      { period: "S85-S88", mission: "Leadership en service, gestion de conflits et communication interpersonnelle." },
+      { period: "S89-S92", mission: "Comptage & suivi caisse, procédures financières de base." },
+      { period: "S93-S96", mission: "Validation RQ (évaluation globale)." }
+    ]
+  },
+  {
+    echelon: "RQ Confirmé",
+    blocks: [
+      { period: "S97-S100", mission: "Formation pôle produit (site virtuel) - connaissance produit & merchandising." },
+      { period: "S101-S104", mission: "Gestion pôle qualité en restaurant : audits, actions correctives, résultats attendus." },
+      { period: "S105-S108", mission: "Suivi résultats qualité sur 1 mois et reporting." },
+      { period: "S109-S112", mission: "Encadrement RQ juniors : coaching & évaluation." },
+      { period: "S113-S116", mission: "Présentation rapport qualité au RO et plan d’action." },
+      { period: "S117-S120", mission: "Validation RQ confirmé." }
+    ]
+  },
+  {
+    echelon: "Assistant Manager",
+    blocks: [
+      { period: "S121-S124", mission: "Formation pôle marketing (site). Comprendre campagnes et indicateurs." },
+      { period: "S125-S128", mission: "Application pôle marketing en restaurant : activation locale, suivi résultats." },
+      { period: "S129-S132", mission: "Formation pôle équipements (site) : procédures maintenance & sécurité." },
+      { period: "S133-S136", mission: "Application pôle équipements : suivi interventions, KPI équipements." },
+      { period: "S137-S140", mission: "Animation d’équipes multi-rôles et coordination des pôles." },
+      { period: "S141-S144", mission: "Validation Assistant Manager (résultats marketing & équipements attendus)." }
+    ]
+  },
+  {
+    echelon: "Assistant Senior",
+    blocks: [
+      { period: "S145-S148", mission: "Formation plannings (site) : règles, contraintes, équilibrage horaire." },
+      { period: "S149-S152", mission: "Création plannings en doublon avec le manager : optimisation couverture." },
+      { period: "S153-S156", mission: "Gestion salaires & contrôles (vérifications, remontées anomalies)." },
+      { period: "S157-S160", mission: "Recrutement + intégration équipiers (entretiens, onboarding)." },
+      { period: "S161-S164", mission: "Réalisation des résultats attendus sur les 4 pôles (produit, qualité, marketing, équipements)." },
+      { period: "S165-S168", mission: "Validation Assistant Senior (évaluation multi-pôles)." }
+    ]
+  },
+  {
+    echelon: "1er Assistant / Directeur Adjoint",
+    blocks: [
+      { period: "S169-S172", mission: "Formation lecture PNL & Grand Livre (compréhension base comptable)." },
+      { period: "S173-S176", mission: "Former et accompagner les managers. Mise en place du projet formation interne." },
+      { period: "S177-S180", mission: "Optimisation indicateurs & budgets : analyses et actions correctives." },
+      { period: "S181-S184", mission: "Pilotage campagnes & projets transverses (marketing, qualité, RH)." },
+      { period: "S185-S188", mission: "Suivi complet RH & planification managers (performances, développement)." },
+      { period: "S189-S192", mission: "Validation 1er Assistant (évaluation stratégique & opérationnelle)." }
+    ]
+  },
+  {
+    echelon: "Directeur de Restaurant",
+    blocks: [
+      { period: "S193-S200", mission: "Budget annuel PNL & prévisions financières. Construction et suivi." +
+      "" },
+      { period: "S201-S208", mission: "Stratégie croissance & gestion sociale : développement des équipes et climat social." },
+      { period: "S209-S216", mission: "Formation & développement managers : coaching, parcours interne, objectifs." },
+      { period: "S217-S220", mission: "Suivi DUER & conformité, pilotage complet du restaurant et reporting exécutif." }
+    ]
+  }
+];
+
+let App = function FormationApp() {
+  const [agenda, setAgenda] = useState(() => {
+    try {
+      const stored = localStorage.getItem("formation_agenda_v1");
+      return stored ? JSON.parse(stored) : INITIAL_AGENDA;
+    } catch (e) {
+      return INITIAL_AGENDA;
+    }
+  });
+  const [selectedEchelon, setSelectedEchelon] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem("formation_agenda_v1", JSON.stringify(agenda));
+  }, [agenda]);
+
+  const toggleValidated = (eIndex, bIndex) => {
+    const newAgenda = JSON.parse(JSON.stringify(agenda));
+    const block = newAgenda[eIndex].blocks[bIndex];
+    block.validated = !block.validated;
+    block.validatedAt = block.validated ? new Date().toISOString() : null;
+    setAgenda(newAgenda);
+  };
+
+  const progressFor = (e) => {
+    const total = e.blocks.length;
+    const done = e.blocks.filter(b => b.validated).length;
+    return Math.round((done / total) * 100);
+  };
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold">📅 Agenda de formation - Parcours Manager</h1>
+        <p className="text-sm text-gray-600 mt-1">Parcours complet du Coach au Directeur — semaine par semaine, missions factuelles.</p>
+      </header>
+
+      <main className="grid gap-6 md:grid-cols-2">
+        {agenda.map((echelon, eIndex) => (
+          <section key={echelon.echelon} className="bg-white rounded-lg shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-xl font-semibold">{echelon.echelon}</h2>
+                <div className="text-xs text-gray-500">Progression: {progressFor(echelon)}%</div>
+              </div>
+              <div className="text-right">
+                <button
+                  className="px-3 py-1 bg-slate-100 rounded-md text-sm"
+                  onClick={() => setSelectedEchelon(selectedEchelon === eIndex ? null : eIndex)}
+                >
+                  {selectedEchelon === eIndex ? 'Masquer' : 'Voir' }
+                </button>
+              </div>
+            </div>
+
+            {selectedEchelon === eIndex ? (
+              <div className="space-y-2">
+                {echelon.blocks.map((b, bIndex) => (
+                  <div key={bIndex} className="border rounded p-3 flex justify-between items-start bg-gray-50">
+                    <div>
+                      <div className="text-sm font-medium">{b.period}</div>
+                      <div className="text-sm text-gray-700 mt-1">{b.mission}</div>
+                      {b.validated && b.validatedAt ? (
+                        <div className="text-xs text-green-700 mt-2">Validé le {new Date(b.validatedAt).toLocaleString()}</div>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <button
+                        className={`px-3 py-1 rounded-md text-sm ${b.validated ? 'bg-green-100' : 'bg-white border'}`}
+                        onClick={() => toggleValidated(eIndex, bIndex)}
+                      >
+                        {b.validated ? '✔ Validé' : 'Valider'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Cliquer sur "Voir" pour dérouler les missions semaine par semaine.</div>
+            )}
+          </section>
+        ))}
+      </main>
+
+      <footer className="mt-6 text-sm text-gray-600">
+        <div>Fonctionnalités possibles à ajouter : export Excel/PDF, authentification, suivi multi-utilisateurs, notifications.</div>
+      </footer>
+    </div>
+  );
+}
+
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  padding: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 22px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+h4 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+h5 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+h6 {
+  margin-top: 0;
+  font-size: 12px;
+}
+
+code {
+  font-size: 1.2em;
+}
+
+ul {
+  padding-inline-start: 20px;
+}
+
+
+</style>
+</html>
